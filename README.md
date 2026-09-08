@@ -139,10 +139,10 @@ This website is completely static, making it 100% free and easy to host on moder
 4. Your site is deployed instantly with a free SSL certificate.
 
 ### 3. Deploying to Vercel
-1. Install Vercel CLI via `npm i -g vercel` or link your GitHub repository on [Vercel.com](https://vercel.com).
-2. Run `vercel` in your project root, or click **Import Project** on the Vercel dashboard.
-3. Framework Preset: select **Other** (Static HTML).
-4. Click **Deploy**.
+1. Link your GitHub repository on [Vercel.com](https://vercel.com) or run `vercel` via Vercel CLI.
+2. Vercel automatically deploys the static files directly (or runs the lightweight static output build).
+3. **Framework Preset**: If asked, select **Other** (Static HTML) with root directory `/`, or leave defaults.
+4. Click **Deploy**. Your site is live with global edge caching and instant SSL!
 
 ---
 
