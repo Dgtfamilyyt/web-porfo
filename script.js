@@ -148,8 +148,9 @@ function initNavigation() {
       hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
 
-    // Close mobile drawer when clicking any nav link
-    navLinks.forEach((link) => {
+    // Close mobile drawer when clicking any nav link or menu CTA
+    const allMenuLinks = navMenu.querySelectorAll('a');
+    allMenuLinks.forEach((link) => {
       link.addEventListener('click', () => {
         if (navMenu.classList.contains('is-open')) {
           navMenu.classList.remove('is-open');
@@ -183,32 +184,111 @@ function initNavigation() {
     });
   }
 
-  // Active section indicator on scroll
-  const highlightActiveNav = () => {
+  // --------------------------------------------------------------------------
+  // Dynamic Scroll-Spy: Accurately highlights active navigation link based on scroll
+  // --------------------------------------------------------------------------
+  const navbar = document.getElementById('navbar');
+  let ticking = false;
+
+  const updateActiveNavLink = () => {
     if (!sections.length || !navLinks.length) return;
+
     const scrollY = window.pageYOffset || window.scrollY || 0;
+    const windowHeight = window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+    const navHeight = navbar ? navbar.offsetHeight : 72;
+    // Section trigger threshold below the fixed navbar
+    const viewOffset = navHeight + 60;
 
-    sections.forEach((section) => {
-      if (!section) return;
-      const sectionHeight = section.offsetHeight;
-      const sectionTop = section.offsetTop - 120;
-      const sectionId = section.getAttribute('id');
-      if (!sectionId) return;
+    let activeId = '';
 
-      if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
-        navLinks.forEach((link) => {
-          if (link && link.getAttribute('href') === `#${sectionId}`) {
-            link.classList.add('active');
-          } else if (link) {
-            link.classList.remove('active');
+    // 1. Scrolled to the bottom of the page -> activate the last section
+    if (windowHeight + scrollY >= docHeight - 40) {
+      const lastSection = sections[sections.length - 1];
+      if (lastSection) {
+        activeId = lastSection.getAttribute('id') || '';
+      }
+    }
+    // 2. Scrolled at or near the very top of the page -> activate the home section
+    else if (scrollY < 100) {
+      activeId = sections[0] ? (sections[0].getAttribute('id') || 'home') : 'home';
+    }
+    // 3. Middle of page -> determine which section is currently active in the viewport
+    else {
+      // Find the current section spanning across the reading line (scrollY + viewOffset)
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i];
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.offsetHeight;
+
+        if (scrollY + viewOffset >= sectionTop && scrollY + viewOffset < sectionTop + sectionHeight) {
+          activeId = section.getAttribute('id') || '';
+          break;
+        }
+      }
+
+      // Fallback: If in between section gaps, select the closest section whose top was passed
+      if (!activeId) {
+        for (let i = sections.length - 1; i >= 0; i--) {
+          const section = sections[i];
+          if (scrollY + viewOffset >= section.offsetTop) {
+            activeId = section.getAttribute('id') || '';
+            break;
+          }
+        }
+      }
+    }
+
+    // Apply active class and accessibility state to matching navigation link
+    if (activeId) {
+      navLinks.forEach((link) => {
+        const href = link.getAttribute('href');
+        if (href === `#${activeId}`) {
+          link.classList.add('active');
+          link.setAttribute('aria-current', 'page');
+        } else {
+          link.classList.remove('active');
+          link.removeAttribute('aria-current');
+        }
+      });
+    }
+  };
+
+  // Immediate click response for smooth UX
+  navLinks.forEach((link) => {
+    link.addEventListener('click', () => {
+      const targetHref = link.getAttribute('href');
+      if (targetHref && targetHref.startsWith('#')) {
+        navLinks.forEach((l) => {
+          if (l === link) {
+            l.classList.add('active');
+            l.setAttribute('aria-current', 'page');
+          } else {
+            l.classList.remove('active');
+            l.removeAttribute('aria-current');
           }
         });
       }
     });
+  });
+
+  // Throttled scroll handler using requestAnimationFrame for optimal 60fps performance
+  const onScroll = () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        updateActiveNavLink();
+        ticking = false;
+      });
+      ticking = true;
+    }
   };
 
-  window.addEventListener('scroll', highlightActiveNav, { passive: true });
-  highlightActiveNav();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  window.addEventListener('orientationchange', onScroll, { passive: true });
+
+  // Initial calculation on execution
+  updateActiveNavLink();
 }
 
 /**
@@ -414,9 +494,9 @@ function initContactForm() {
 
     const encodedSubject = encodeURIComponent(`[Portfolio Contact] ${subjectVal}`);
     const encodedBody = encodeURIComponent(
-      `Hello [NAME],\n\nMy name is ${nameVal} (${emailVal}).\n\n${messageVal}\n\nSent from your portfolio website.`
+      `Hello DGT,\n\nMy name is ${nameVal} (${emailVal}).\n\n${messageVal}\n\nSent from your portfolio website.`
     );
-    const mailtoUrl = `mailto:[EMAIL-ADDRESS]?subject=${encodedSubject}&body=${encodedBody}`;
+    const mailtoUrl = `mailto:25d119@psgitech.ac.in?subject=${encodedSubject}&body=${encodedBody}`;
 
     statusContainer.className = 'form-status success';
     statusContainer.innerHTML = `
@@ -453,7 +533,7 @@ function initClipboardUtils() {
   if (!copyBtn) return;
 
   copyBtn.addEventListener('click', () => {
-    const emailText = copyBtn.getAttribute('data-email') || '[EMAIL-ADDRESS]';
+    const emailText = copyBtn.getAttribute('data-email') || '25d119@psgitech.ac.in';
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(emailText).then(() => {
